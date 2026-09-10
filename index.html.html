@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chinese Flashcards</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#111;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+.app{max-width:680px;margin:auto;padding:24px 16px 32px}h1{font-size:27px;margin:5px 0 3px}.intro{color:#777;margin:0 0 22px}
+.weeks{display:grid;gap:14px}.week{background:#fff;border:0;border-radius:20px;padding:20px;text-align:left;box-shadow:0 6px 24px #00000010;cursor:pointer}
+.week h2{margin:0 0 5px;font-size:21px}.week p{margin:0;color:#666}.num{float:right;font-size:14px;color:#888}
+.all{margin-top:14px;width:100%;border:0;border-radius:15px;padding:15px;background:#111;color:#fff;font-size:17px;cursor:pointer}
+.hidden{display:none}.top{display:flex;justify-content:space-between;align-items:center}.back{border:0;background:#e8e8ed;border-radius:10px;padding:9px 13px;font-size:15px}
+.count{color:#666;font-size:14px}.progress{height:7px;background:#ddd;border-radius:8px;overflow:hidden;margin:12px 0 18px}.bar{height:100%;background:#111;width:0}
+.card{height:430px;perspective:1000px;cursor:pointer;margin:14px 0}.inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:.45s}.card.flip .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;background:#fff;border-radius:24px;box-shadow:0 8px 30px #0001;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.backface{transform:rotateY(180deg)}.hanzi{font-size:115px;line-height:1}.pinyin{font-size:34px;margin:18px 0 8px}.meaning{font-size:27px}.hint{color:#999;font-size:14px;margin-top:22px}
+.controls,.tools{display:flex;gap:10px}.controls button,.tools button{border:0;border-radius:14px;padding:14px;font-size:17px;flex:1;cursor:pointer}.next{background:#111;color:#fff}.tools{margin-top:10px}.tools button{background:#e8e8ed;font-size:15px}.small{text-align:center;color:#777;font-size:13px;margin-top:12px;line-height:1.5}
+</style></head><body>
+<div class="app" id="home">
+<h1>🀄 Chinese Flashcards</h1><p class="intro">เลือกสัปดาห์ที่ต้องการทบทวน</p>
+<div class="weeks">
+<button class="week" onclick="start(1)"><span class="num">24 คำ</span><h2>📚 Week 1</h2><p>我 你 他 她 · ตัวเลข · คำศัพท์พื้นฐาน</p></button>
+<button class="week" onclick="start(2)"><span class="num">15 คำ</span><h2>📖 Week 2</h2><p>忙 吗 很 · ภาษา · ครอบครัว · คำศัพท์พื้นฐาน</p></button>
+</div>
+<button class="all" onclick="start(0)">🔀 สุ่มรวม Week 1 + Week 2</button>
+</div>
+
+<div class="app hidden" id="study">
+<div class="top"><button class="back" onclick="goHome()">← Home</button><div class="count" id="count"></div></div>
+<p class="intro" id="title"></p><div class="progress"><div class="bar" id="bar"></div></div>
+<div class="card" id="card" onclick="flip()"><div class="inner">
+<div class="face"><div class="hanzi" id="front"></div><div class="hint">แตะเพื่อดูคำอ่าน + ความหมาย</div></div>
+<div class="face backface"><div class="hanzi" id="bh"></div><div class="pinyin" id="py"></div><div class="meaning" id="mean"></div><div class="hint">แตะเพื่อกลับด้าน</div></div>
+</div></div>
+<div class="controls"><button onclick="prev(event)">← ก่อนหน้า</button><button class="next" onclick="next(event)">ถัดไป →</button></div>
+<div class="tools"><button onclick="shuffle()">🔀 สุ่ม</button><button onclick="resetDeck()">↻ เริ่มใหม่</button></div>
+<div class="small">Space = เปิดการ์ด · ← → = เปลี่ยนใบ</div>
+</div>
+
+<script>
+const weeks = {1:[["我", "wǒ", "ฉัน / ผม"], ["你", "nǐ", "คุณ / เธอ"], ["他", "tā", "เขา (ผู้ชาย)"], ["她", "tā", "เธอ / เขา (ผู้หญิง)"], ["好", "hǎo", "ดี / สบายดี"], ["一", "yī", "หนึ่ง"], ["二", "èr", "สอง"], ["三", "sān", "สาม"], ["四", "sì", "สี่"], ["五", "wǔ", "ห้า"], ["六", "liù", "หก"], ["七", "qī", "เจ็ด"], ["八", "bā", "แปด"], ["九", "jiǔ", "เก้า"], ["十", "shí", "สิบ"], ["百", "bǎi", "ร้อย"], ["千", "qiān", "พัน"], ["万", "wàn", "หมื่น"], ["大", "dà", "ใหญ่"], ["不", "bù", "ไม่"], ["口", "kǒu", "ปาก"], ["白", "bái", "สีขาว"], ["马", "mǎ", "ม้า"], ["女", "nǚ", "ผู้หญิง / หญิง"]],2:[["忙", "máng", "ยุ่ง"], ["吗", "ma", "ไหม / หรือไม่"], ["很", "hěn", "มาก / ค่อนข้าง"], ["汉语", "Hànyǔ", "ภาษาจีน"], ["泰语", "Tàiyǔ", "ภาษาไทย"], ["英语", "Yīngyǔ", "ภาษาอังกฤษ"], ["难", "nán", "ยาก"], ["太", "tài", "เกินไป / มากเกินไป"], ["爸爸", "bàba", "พ่อ / คุณพ่อ"], ["妈妈", "māma", "แม่ / คุณแม่"], ["妹妹", "mèimei", "น้องสาว"], ["弟弟", "dìdi", "น้องชาย"], ["姐姐", "jiějie", "พี่สาว"], ["男", "nán", "ผู้ชาย / ชาย"], ["白", "bái", "สีขาว"]]};
+let deck=[],i=0,current=1;
+const $=id=>document.getElementById(id);
+function start(w){current=w;deck=w===0?[...weeks[1],...weeks[2]]:[...weeks[w]];i=0;$("home").classList.add("hidden");$("study").classList.remove("hidden");$("title").textContent=w===0?"สุ่มรวม Week 1 + Week 2":`Week ${w}`;render()}
+function render(){let x=deck[i];$("front").textContent=x[0];$("bh").textContent=x[0];$("py").textContent=x[1];$("mean").textContent=x[2];$("count").textContent=`${i+1} / ${deck.length}`;$("bar").style.width=((i+1)/deck.length*100)+"%";$("card").classList.remove("flip")}
+function flip(){$("card").classList.toggle("flip")}
+function next(e){e.stopPropagation();i=(i+1)%deck.length;render()}
+function prev(e){e.stopPropagation();i=(i-1+deck.length)%deck.length;render()}
+function shuffle(){deck.sort(()=>Math.random()-.5);i=0;render()}
+function resetDeck(){deck=current===0?[...weeks[1],...weeks[2]]:[...weeks[current]];i=0;render()}
+function goHome(){$("study").classList.add("hidden");$("home").classList.remove("hidden")}
+document.addEventListener("keydown",e=>{if($("study").classList.contains("hidden"))return;if(e.key===" "){e.preventDefault();flip()}else if(e.key==="ArrowRight")next(e);else if(e.key==="ArrowLeft")prev(e)})
+</script></body></html>
